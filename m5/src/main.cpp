@@ -39,7 +39,7 @@ void setup() {
   // 引数に指定している BMP280_ADDRESS_ALT はBMP280センサーのI2Cアドレスです。
   bool bmp280InitResult = bmp280.begin(BMP280_ADDRESS_ALT);
 
-  // M5StackのLCDを黒で塗りつぶします
+  // M5StackのLCD(液晶ディスプレイ)を黒で塗りつぶします
   M5.Lcd.fillScreen(BLACK);
   // M5StackのLCDで表示する文字色を白、背景色を黒に設定します。
   M5.Lcd.setTextColor(WHITE ,BLACK);
