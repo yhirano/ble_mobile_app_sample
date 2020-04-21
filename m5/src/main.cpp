@@ -17,16 +17,23 @@ static Adafruit_BMP280 bmp280;
 static BLEServer* pBleServer = NULL;
 static BLECharacteristic* pBleNotifyCharacteristic = NULL;
 
-// 温度と気圧のデータを指定したバッファーに書き込みます
-// バッファーには、1バイト目と2バイト目にはビッグエンディアンで温度を格納し、
-// 3バイト目と4バイト目にはビッグエンディアンで気圧を格納します。
+// 温度と気圧のデータを指定したバッファーに書き込みます。
+// バッファーには、1〜4バイト目にはリトルエンディアンで温度を格納し、
+// 5〜8バイト目にはリトルエンディアンで気圧を格納します。
 // 
-// - buffer uint8_tの4つ分以上のサイズのバッファを指定すること
+// - buffer uint8_tの8つ分以上のサイズのバッファを指定すること
 static void pack(uint8_t* buffer, float temperature, float pressure) {
-  buffer[0] = (int16_t)(temperature * 100) & 0xff;
-  buffer[1] = ((int16_t)(temperature * 100) >> 8);
-  buffer[2] = (int16_t)(pressure * 100) & 0xff;
-  buffer[3] = ((int16_t)(pressure * 100) >> 8);
+  int32_t temperature100 = (int32_t)(temperature * 100);
+  buffer[0] = temperature100 & 0x000000ff;
+  buffer[1] = (temperature100 & 0x0000ff00) >> 8;
+  buffer[2] = (temperature100 & 0x00ff0000) >> 16;
+  buffer[3] = (temperature100 & 0xff000000) >> 24;
+
+  int32_t pressure100 = (int32_t)(pressure * 100);
+  buffer[4] = pressure100 & 0x000000ff;
+  buffer[5] = (pressure100 & 0x0000ff00) >> 8;
+  buffer[6] = (pressure100 & 0x00ff0000) >> 16;
+  buffer[7] = (pressure100 & 0xff000000) >> 24;
 }
 
 // 起動時に最初の1回だけ呼ばれる処理は setup 関数内に書きます
@@ -76,7 +83,7 @@ void setup() {
   pBleNotifyCharacteristic = pBleService->createCharacteristic(
                                 // Characteristic UUIDを指定
                                 BLE_CHARACTERISTIC_UUID,
-                                // このCharacteristicが通知にのみ対応していることを指定
+                                // このCharacteristicのプロパティを設定
                                 BLECharacteristic::PROPERTY_NOTIFY
                              );
   // BLE Characteristicにディスクリプタを設定
@@ -110,11 +117,11 @@ void loop() {
   M5.Lcd.printf("%.2fhPa", pressure);
 
   // BLEでのデータ通知用バッファを定義
-  uint8_t dataBuffer[4];
+  uint8_t dataBuffer[8];
   // 温度と気圧のデータをdataBufferに格納します
   pack(dataBuffer, temperature, pressure);
   // データをBLEに設定し、送信します
-  pBleNotifyCharacteristic->setValue(dataBuffer, 4);
+  pBleNotifyCharacteristic->setValue(dataBuffer, 8);
   pBleNotifyCharacteristic->notify();
 
   // 33ミリ秒停止します
