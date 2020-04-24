@@ -13,5 +13,5 @@ M5Stackで測定した温度と気圧をBLEで飛ばし、Androidアプリで受
 
 ```plane
 android - Androidアプリ
-m5      - M5Stackのファームウェア
+m5stack - M5Stackのファームウェア
 ```
